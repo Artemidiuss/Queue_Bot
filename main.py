@@ -5,7 +5,7 @@ import json
 import random
 import string
 
-bot = telebot.TeleBot("YOUR API", parse_mode=None)
+bot = telebot.TeleBot("6333234962:AAHuNXboyNDmOiwSBDfTNxbIyWN8dLjQgjU", parse_mode=None)
 
 
 def queue_drawing(message, queue_id, message_id=False):
@@ -113,7 +113,7 @@ def start_handler(message):
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    if message.text == 'Створити чергу':
+    if message.text == 'Створити чергу' or message.text == '/new_queue':
         bot.send_message(message.from_user.id, "Назвіть якось вашу чергу, це може бути щось типу <ШІ-14> або"
                                                " <Боже помилуй 123>")
         return
