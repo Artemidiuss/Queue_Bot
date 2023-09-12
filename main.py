@@ -58,10 +58,9 @@ def queue_drawing(message, queue_id, message_id=False):
                 try:
                     bot.edit_message_text(chat_id=message.chat.id, message_id=message_id, text=big_message,
                                           reply_markup=keyboard2, parse_mode='HTML')
-                except:
-                    pass
+                except telebot.apihelper.ApiTelegramException:
+                    return
                 return
-            # bot.send_message(message.chat.id, f'Черга <{file_data[queue_id]["name"]}>:')
             bot.send_message(message.chat.id, big_message, reply_markup=keyboard2, parse_mode='HTML')
             return
     try:
@@ -69,7 +68,6 @@ def queue_drawing(message, queue_id, message_id=False):
                               parse_mode='HTML')
     except telebot.apihelper.ApiTelegramException:
         bot.send_message(chat_id=message.chat.id, text=big_message, reply_markup=keyboard, parse_mode='HTML')
-    # bot.send_message(message.chat.id, 'Додатись у чергу?', reply_markup=keyboard)
 
 
 @bot.message_handler(commands=['start'])
@@ -103,7 +101,6 @@ def start_handler(message):
             button2 = types.InlineKeyboardButton(text="Покинути чергу", callback_data=f'{queue_id} Покинути чергу')
             keyboard.add(button1)
             keyboard2.add(button2)
-            # bot.send_message(message.chat.id, 'Пошук черги..', reply_markup=markup)
 
             try:
                 if not file_data[queue_id]['members']:
@@ -174,14 +171,13 @@ def callback_query(call):
         if text_on_button == 'Приєднатись':
             with open('data.json', 'r') as file:
                 file_data = dict(json.load(file))
-                if name not in file_data[queue_id]['members']:
-                    file_data[queue_id]['members'].append(name)
-                    with open('data.json', 'w') as f:
-                        json.dump(file_data, f, indent=4)
-                    queue_drawing(message=call.message, queue_id=queue_id,
-                                  message_id=call.json['message']['message_id'])
-                    print(call.from_user.full_name + ' приєднався до черги ' + file_data[queue_id]['name'])
-                    # bot.send_message(chat_id, 'Вітаємо у черзі🥳', reply_markup=keyboard)
+            if name not in file_data[queue_id]['members']:
+                file_data[queue_id]['members'].append(name)
+                with open('data.json', 'w') as f:
+                    json.dump(file_data, f, indent=4)
+                queue_drawing(message=call.message, queue_id=queue_id,
+                              message_id=call.json['message']['message_id'])
+                print(call.from_user.full_name + ' приєднався до черги ' + file_data[queue_id]['name'])
         if text_on_button == 'Покинути чергу':
             with open('data.json', 'r') as file:
                 file_data = dict(json.load(file))
@@ -191,7 +187,6 @@ def callback_query(call):
                     json.dump(file_data, f, indent=4)
                 queue_drawing(message=call.message, queue_id=queue_id, message_id=call.json['message']['message_id'])
 
-            # bot.send_message(chat_id, f'Ви покинули чергу🙁', reply_markup=keyboard)
         if text_on_button == 'Оновити чергу':
             queue_drawing(message=call.message, queue_id=queue_id, message_id=call.json['message']['message_id'])
 
@@ -212,10 +207,18 @@ def callback_query(call):
             with open('data.json', 'r') as file:
                 file_data = dict(json.load(file))
             if queue_id in file_data:
+                string_to_delete = file_data[queue_id]['name']+'\n'
                 file_data.pop(queue_id)
                 with open('data.json', 'w') as f:
                     json.dump(file_data, f, indent=4)
                 if queue_id not in file_data:
+                    with open('queue_list.txt', 'r') as file:
+                        lines = file.readlines()
+                    if string_to_delete in lines:
+                        lines.remove(string_to_delete)
+                    with open('queue_list.txt', 'w') as file:
+                        file.writelines(lines)
+
                     bot.edit_message_text(chat_id=call.message.chat.id,
                                           message_id=call.json['message']['message_id'],
                                           text='<b>Чергу успішно видалено</b>', parse_mode='HTML')
