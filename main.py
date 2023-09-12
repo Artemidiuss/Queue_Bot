@@ -5,7 +5,7 @@ import json
 import random
 import string
 
-bot = telebot.TeleBot("6333234962:AAHuNXboyNDmOiwSBDfTNxbIyWN8dLjQgjU", parse_mode=None)
+bot = telebot.TeleBot("Your bot id", parse_mode=None)
 
 
 def queue_drawing(message, queue_id, message_id=False):
