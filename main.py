@@ -5,7 +5,8 @@ import json
 import random
 import string
 
-bot = telebot.TeleBot("Your bot id", parse_mode=None)
+token = open('token.txt').read()
+bot = telebot.TeleBot(token, parse_mode='HTML')
 
 
 def queue_drawing(message, queue_id, message_id=False):
@@ -26,7 +27,7 @@ def queue_drawing(message, queue_id, message_id=False):
             return
     big_message = '\n'.join(
         [f"{num}. {name}\n" for num, name in enumerate(file_data[queue_id]['members'], 1)])
-    big_message = f'Черга *{file_data[queue_id]["name"]}*\n\n' + big_message
+    big_message = f'Черга <b>«{file_data[queue_id]["name"]}»</b>\n\n' + big_message
 
     new_message = ''
     el_is_at = False
