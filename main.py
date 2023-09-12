@@ -6,7 +6,7 @@ import random
 import string
 
 token = open('token.txt').read()
-bot = telebot.TeleBot(token, parse_mode='HTML')
+bot = telebot.TeleBot(token)
 
 
 def queue_drawing(message, queue_id, message_id=False):
@@ -52,17 +52,17 @@ def queue_drawing(message, queue_id, message_id=False):
             if message_id:
                 try:
                     bot.edit_message_text(chat_id=message.chat.id, message_id=message_id, text=big_message,
-                                          reply_markup=keyboard2)
+                                          reply_markup=keyboard2, parse_mode='HTML')
                 except:
                     pass
                 return
             # bot.send_message(message.chat.id, f'Черга <{file_data[queue_id]["name"]}>:')
-            bot.send_message(message.chat.id, big_message, reply_markup=keyboard2)
+            bot.send_message(message.chat.id, big_message, reply_markup=keyboard2, parse_mode='HTML')
             return
     try:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message_id, text=big_message, reply_markup=keyboard)
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message_id, text=big_message, reply_markup=keyboard, parse_mode='HTML')
     except telebot.apihelper.ApiTelegramException:
-        bot.send_message(chat_id=message.chat.id, text=big_message, reply_markup=keyboard)
+        bot.send_message(chat_id=message.chat.id, text=big_message, reply_markup=keyboard, parse_mode='HTML')
     # bot.send_message(message.chat.id, 'Додатись у чергу?', reply_markup=keyboard)
 
 
