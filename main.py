@@ -18,9 +18,14 @@ def queue_drawing(message, queue_id, message_id=False):
                                              callback_data=f'{queue_id} Приєднатись')
         button2 = types.InlineKeyboardButton(text="Покинути чергу", callback_data=f'{queue_id} Покинути чергу')
         button3 = types.InlineKeyboardButton(text="Оновити чергу", callback_data=f'{queue_id} Оновити чергу')
+        button4 = types.InlineKeyboardButton(text="Видалити чергу", callback_data=f'{queue_id} Видалити чергу')
 
         keyboard.add(button1)
         keyboard2.add(button3, button2)
+
+        if file_data[queue_id]['admin'] == message.chat.id:
+            keyboard2.add(button4)
+
         if not file_data[queue_id]['members']:
             bot.edit_message_text(chat_id=message.chat.id, message_id=message_id,
                                   text='Черга поки-що пуста, додатись у чергу?', reply_markup=keyboard)
@@ -60,7 +65,8 @@ def queue_drawing(message, queue_id, message_id=False):
             bot.send_message(message.chat.id, big_message, reply_markup=keyboard2, parse_mode='HTML')
             return
     try:
-        bot.edit_message_text(chat_id=message.chat.id, message_id=message_id, text=big_message, reply_markup=keyboard, parse_mode='HTML')
+        bot.edit_message_text(chat_id=message.chat.id, message_id=message_id, text=big_message, reply_markup=keyboard,
+                              parse_mode='HTML')
     except telebot.apihelper.ApiTelegramException:
         bot.send_message(chat_id=message.chat.id, text=big_message, reply_markup=keyboard, parse_mode='HTML')
     # bot.send_message(message.chat.id, 'Додатись у чергу?', reply_markup=keyboard)
@@ -101,7 +107,8 @@ def start_handler(message):
 
             try:
                 if not file_data[queue_id]['members']:
-                    bot.send_message(message.chat.id, 'Черга поки-що пуста. Приєднатись?', reply_markup=keyboard)
+                    bot.send_message(chat_id=message.chat.id, text='Черга поки-що пуста. Приєднатись?',
+                                     reply_markup=keyboard)
                 else:
                     queue_drawing(message, queue_id)
             except KeyError:
@@ -129,7 +136,6 @@ def get_text_messages(message):
         bot.send_message(message.from_user.id, 'Чергу створено')
         print(message.from_user.full_name + ' Створив чергу ' + queue_name)
 
-
         letters = string.ascii_letters + string.digits
         queue_id = ''.join(random.choice(letters) for _ in range(10))
 
@@ -147,7 +153,7 @@ def get_text_messages(message):
         with open('data.json', 'w') as file:
             json.dump(file_data, file, indent=4)
         message_id = bot.send_message(message.from_user.id,
-                                      f'посилання на чергу <{queue_name}>: https://t.me/imqueuebot?start='
+                                      f'посилання на чергу <{queue_name}>: https://t.me/{bot.get_me().username}?start='
                                       f'{queue_id}').message_id
         bot.pin_chat_message(message.chat.id, message_id)
 
@@ -188,6 +194,36 @@ def callback_query(call):
             # bot.send_message(chat_id, f'Ви покинули чергу🙁', reply_markup=keyboard)
         if text_on_button == 'Оновити чергу':
             queue_drawing(message=call.message, queue_id=queue_id, message_id=call.json['message']['message_id'])
+
+        if text_on_button == 'Видалити чергу':
+            keyboard = types.InlineKeyboardMarkup()
+            button1 = types.InlineKeyboardButton(text="Так",
+                                                 callback_data=f'{queue_id} Так')
+            button2 = types.InlineKeyboardButton(text="Ні",
+                                                 callback_data=f'{queue_id} Ні')
+            keyboard.add(button1, button2)
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.json['message']['message_id'],
+                                  text='<b>Дійсно видалити чергу?</b>', parse_mode='HTML', reply_markup=keyboard)
+
+        if text_on_button == 'Ні':
+            queue_drawing(message=call.message, queue_id=queue_id, message_id=call.json['message']['message_id'])
+
+        if text_on_button == 'Так':
+            with open('data.json', 'r') as file:
+                file_data = dict(json.load(file))
+            if queue_id in file_data:
+                file_data.pop(queue_id)
+                with open('data.json', 'w') as f:
+                    json.dump(file_data, f, indent=4)
+                if queue_id not in file_data:
+                    bot.edit_message_text(chat_id=call.message.chat.id,
+                                          message_id=call.json['message']['message_id'],
+                                          text='<b>Чергу успішно видалено</b>', parse_mode='HTML')
+                else:
+                    bot.edit_message_text(chat_id=call.message.chat.id,
+                                          message_id=call.json['message']['message_id'],
+                                          text='<b>Щось пішло не так🙁</b>', parse_mode='HTML')
+
     except KeyError:
         bot.send_message(chat_id, 'Сталася прикра помилка. Можливо черги більше не існує🙁')
 
